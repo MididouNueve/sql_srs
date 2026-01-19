@@ -3,35 +3,31 @@ import streamlit as st
 import pandas as pd
 import duckdb as duckdb
 
-csv = """
-beverage,price
-orange juice,2.5
-Expresso,2
-Tea,3
-"""
+con = duckdb.connect(database="data/exercises_sql_tables.duckdb", read_only=False)
 
-beverages = pd.read_csv(io.StringIO(csv))
+# solution_df = duckdb.sql(ANSWER_STR).df()
 
-csv2 = """
-food_item,food_price
-cookie juice,2.5
-chocolatine,2
-muffin,3
-"""
+with st.sidebar:
+    theme = st.selectbox(
+        "What would you like to review?",
+        ("cross_joins", "GroupBy", "Windows Functions"),
+        index=None,
+        placeholder="Select a theme...",
+    )
 
-food_items = pd.read_csv(io.StringIO(csv2))
+    st.write("You selected:", theme)
 
-answer = """
-SELECT * FROM beverages
-CROSS JOIN food_items
-"""
-solution = duckdb.sql(answer).df()
+exercise = con.execute(
+    f"SELECT * FROM memory_state WHERE theme = '{theme}'"
+).df()
+
+st.write(exercise)
 
 
 with st.sidebar:
     option = st.selectbox(
         "What would you like to review?",
-        ("Groupbys", "Joins", "Windows functions"),
+        ("Groupbys", "cross_joins", "Windows functions"),
         index=None,
         placeholder="Select a theme...",
     )
