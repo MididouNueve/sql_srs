@@ -1,7 +1,12 @@
 import io
 import streamlit as st
 import pandas as pd
+import ast
 import duckdb as duckdb
+from functions import normalize_tables
+
+
+
 
 con = duckdb.connect(database="data/exercises_sql_tables.duckdb", read_only=False)
 
@@ -17,42 +22,38 @@ with st.sidebar:
 
     st.write("You selected:", theme)
 
-exercise = con.execute(
-    f"SELECT * FROM memory_state WHERE theme = '{theme}'"
-).df()
-
-st.write(exercise)
-
-
-with st.sidebar:
-    option = st.selectbox(
-        "What would you like to review?",
-        ("Groupbys", "cross_joins", "Windows functions"),
-        index=None,
-        placeholder="Select a theme...",
-    )
-    st.write("You selected:", option)
-
+    exercise = con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'").df()
+    st.write(exercise)
 
 st.header("enter your code:")
 query = st.text_area(label="votre code SQL ici", key="user_input")
 
 if query:
-    result = duckdb.sql(query).df()
+    result = con.execute(query).df()
     st.dataframe(result)
+
+#if query:
+#    result = duckdb.sql(query).df()
+#    st.dataframe(result)
 
 
 tab2, tab3 = st.tabs(["Tables", "Solution"])
 
+
 with tab2:
-    st.write("table: beverages")
-    st.dataframe(beverages)
-
-    st.write("table: food_items")
-    st.dataframe(food_items)
-
-    st.write("expected:")
-    st.dataframe(solution)
+    exercise_tables = normalize_tables(exercise.loc[0, "tables"])
+    for table in exercise_tables:
+        st.write(f"table: {table}")
+        df_table = con.execute(f"SELECT * FROM {table}").df()
+        st.dataframe(df_table)
 
 with tab3:
+    exercise_name = exercise.loc[0, "exercise_name"]
+
+    with open(f"answers/{exercise_name}.sql", "r") as f:
+        answer = f.read()
+
     st.write(answer)
+
+
+
